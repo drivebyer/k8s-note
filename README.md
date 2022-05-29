@@ -1,107 +1,66 @@
-# Kubernetes (K8s)
+# 笔记
+> Latest update: 2022-05-29
 
-[![GoPkg Widget]][GoPkg] [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/569/badge)](https://bestpractices.coreinfrastructure.org/projects/569)
+## client-go
 
-<img src="https://github.com/kubernetes/kubernetes/raw/master/logo/logo.png" width="100">
+| 笔记                                                                                                   | 状态                 |
+|------------------------------------------------------------------------------------------------------|--------------------|
+| [Informer系列之Reflector](./staging/src/k8s.io/client-go/tools/cache/reflector_note.md)                 | :heavy_check_mark: |
+| [Informer系列之Indexer](./staging/src/k8s.io/client-go/tools/cache/index_note.md)                       | :heavy_check_mark: |
+| [Informer系列之SharedIndexInformer](./staging/src/k8s.io/client-go/tools/cache/shared_informer_note.md) | :heavy_check_mark: |
+| [集群 leader 选举机制](./staging/src/k8s.io/client-go/tools/leaderelection/note.md)                        | :heavy_check_mark: |
+| [事件管理机制]()                                                                                           | todo               |
 
-----
+## Controller Manager
 
-Kubernetes, also known as K8s, is an open source system for managing [containerized applications]
-across multiple hosts. It provides basic mechanisms for deployment, maintenance,
-and scaling of applications.
+| 笔记                                                           | 状态   |
+|--------------------------------------------------------------|------|
+| [Deployment Controller](./pkg/controller/deployment/note.md) | todo |
 
-Kubernetes builds upon a decade and a half of experience at Google running
-production workloads at scale using a system called [Borg],
-combined with best-of-breed ideas and practices from the community.
+## API Server
 
-Kubernetes is hosted by the Cloud Native Computing Foundation ([CNCF]).
-If your company wants to help shape the evolution of
-technologies that are container-packaged, dynamically scheduled,
-and microservices-oriented, consider joining the CNCF.
-For details about who's involved and how Kubernetes plays a role,
-read the CNCF [announcement].
+| 笔记                                                                                          | 状态                 |
+|---------------------------------------------------------------------------------------------|--------------------|
+| [资源注册流程-核心服务](./pkg/api/legacyscheme/note.md)                                               | :heavy_check_mark: |
+| [资源注册流程-扩展服务](./staging/src/k8s.io/apiextensions-apiserver/pkg/apiserver/note.md)           | :heavy_check_mark: |
+| [资源注册流程-聚合服务](./staging/src/k8s.io/kube-aggregator/pkg/apiserver/scheme/note.md)️           | todo               |
+| [配置与结构体创建流程](./cmd/kube-apiserver/app/note.md)                                              | :heavy_check_mark: |
+| [Extension Server 创建流程](./staging/src/k8s.io/apiextensions-apiserver/pkg/apiserver/note.md) | :heavy_check_mark: |
+| [API Server 创建流程](./pkg/controlplane/note.md)                                               | todo               |
+| [Aggregator Server 创建流程](./staging/src/k8s.io/kube-aggregator/pkg/apiserver/note.md)        | todo               |
+| [认证](./staging/src/k8s.io/apiserver/pkg/endpoints/filters/authentication_note.md)           | :heavy_check_mark: |
+| [授权](./staging/src/k8s.io/apiserver/pkg/endpoints/filters/authorization_note.md)            | :heavy_check_mark: |
+| [准入](./staging/src/k8s.io/apiserver/pkg/admission/note.md)                                  | :heavy_check_mark: |
+| [对接 Etcd](./staging/src/k8s.io/apiserver/pkg/registry/note.md)                              | :heavy_check_mark: |
 
-----
+## Scheduler
 
-## To start using K8s
+* find all feasible nodes
+* runs a set of functions to score the feasible Nodes
+* picks a Node with the highest score
+* binding: notifies the API server about this decision
 
-See our documentation on [kubernetes.io].
+|      | QueueSort                                                                         | PreFilter/Filter                                                                                                 | Filter | PreScore | Score | Normalize Score | Reserve | Permit | WaitOnPermit | PreBind | Bind | PostBind |
+|------|-----------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|--------|----------|-------|-----------------|---------|--------|--------------|---------|------|----------|
+| 调用链路 | `NextPod -> MakeNextPodFunc -> SchedulingQueue.Pop -> activeQ.Pop -> ··· -> Less` | `scheduleOne -> SchedulePod -> findNodesThatFitPod -> RunPreFilterPlugins`                                       |        |          |       |                 |         |        |              |         |      |          |
+|      | [PrioritySort](./pkg/scheduler/framework/plugins/queuesort/note.md)               | [Fit](./pkg/scheduler/framework/plugins/noderesources/fit_prefilter_filter_note.md)                              |        |          |       |                 |         |        |              |         |      |          |
+|      |                                                                                   | [InterPodAffinity](./pkg/scheduler/framework/plugins/interpodaffinity/interpodaffinity_prefilter_filter_note.md) |        |          |       |                 |         |        |              |         |      |          |
+|      |                                                                                   | [NodeAffinity](./pkg/scheduler/framework/plugins/nodeaffinity/node_affinity_prefilter_filter_note.md)            |        |          |       |                 |         |        |              |         |      |          |
+|      |                                                                                   | [NodePorts](./pkg/scheduler/framework/plugins/nodeports/node_ports_prefilter_filter_note.md)                     |        |          |       |                 |         |        |              |         |      |          |
+|      |                                                                                   | [PodTopologySpread]                                                                                              |        |          |       |                 |         |        |              |         |      |          |
+|      |                                                                                   | [VolumeBinding](./pkg/scheduler/framework/plugins/volumebinding/prefilter_filter_note.md)                        |        |          |       |                 |         |        |              |         |      |          |
+|      |                                                                                   | [VolumeRestrictions](./pkg/scheduler/framework/plugins/volumerestrictions/prefilter_filter_note.md)              |        |          |       |                 |         |        |              |         |      |          |
+|      |                                                                                   |                                                                                                                  |        |          |       |                 |         |        |              |         |      |          |
 
-Try our [interactive tutorial].
+## apimachinery
 
-Take a free course on [Scalable Microservices with Kubernetes].
+| 笔记                                                                   | 状态   |
+|----------------------------------------------------------------------|------|
+| [util/wait](./staging/src/k8s.io/apimachinery/pkg/util/wait/note.md) | todo |
 
-To use Kubernetes code as a library in other applications, see the [list of published components](https://git.k8s.io/kubernetes/staging/README.md).
-Use of the `k8s.io/kubernetes` module or `k8s.io/kubernetes/...` packages as libraries is not supported.
+## Tips
 
-## To start developing K8s
-
-The [community repository] hosts all information about
-building Kubernetes from source, how to contribute code
-and documentation, who to contact about what, etc.
-
-If you want to build Kubernetes right away there are two options:
-
-##### You have a working [Go environment].
-
-```
-mkdir -p $GOPATH/src/k8s.io
-cd $GOPATH/src/k8s.io
-git clone https://github.com/kubernetes/kubernetes
-cd kubernetes
-make
-```
-
-##### You have a working [Docker environment].
-
-```
-git clone https://github.com/kubernetes/kubernetes
-cd kubernetes
-make quick-release
-```
-
-For the full story, head over to the [developer's documentation].
-
-## Support
-
-If you need support, start with the [troubleshooting guide],
-and work your way through the process that we've outlined.
-
-That said, if you have questions, reach out to us
-[one way or another][communication].
-
-[announcement]: https://cncf.io/news/announcement/2015/07/new-cloud-native-computing-foundation-drive-alignment-among-container
-[Borg]: https://research.google.com/pubs/pub43438.html
-[CNCF]: https://www.cncf.io/about
-[communication]: https://git.k8s.io/community/communication
-[community repository]: https://git.k8s.io/community
-[containerized applications]: https://kubernetes.io/docs/concepts/overview/what-is-kubernetes/
-[developer's documentation]: https://git.k8s.io/community/contributors/devel#readme
-[Docker environment]: https://docs.docker.com/engine
-[Go environment]: https://golang.org/doc/install
-[GoPkg]: https://pkg.go.dev/k8s.io/kubernetes
-[GoPkg Widget]: https://pkg.go.dev/badge/k8s.io/kubernetes.svg
-[interactive tutorial]: https://kubernetes.io/docs/tutorials/kubernetes-basics
-[kubernetes.io]: https://kubernetes.io
-[Scalable Microservices with Kubernetes]: https://www.udacity.com/course/scalable-microservices-with-kubernetes--ud615
-[troubleshooting guide]: https://kubernetes.io/docs/tasks/debug-application-cluster/troubleshooting/
-
-## Community Meetings 
-
-The [Calendar](https://www.kubernetes.dev/resources/calendar/) has the list of all the meetings in Kubernetes community in a single location.
-
-## Adopters
-
-The [User Case Studies](https://kubernetes.io/case-studies/) website has real-world use cases of organizations across industries that are deploying/migrating to Kubernetes.
-
-## Governance 
-
-Kubernetes project is governed by a framework of principles, values, policies and processes to help our community and constituents towards our shared goals.
-
-The [Kubernetes Community](https://github.com/kubernetes/community/blob/master/governance.md) is the launching point for learning about how we organize ourselves.
-
-The [Kubernetes Steering community repo](https://github.com/kubernetes/steering) is used by the Kubernetes Steering Committee, which oversees governance of the Kubernetes project.
-
-## Roadmap 
-
-The [Kubernetes Enhancements repo](https://github.com/kubernetes/enhancements) provides information about Kubernetes releases, as well as feature tracking and backlogs.
+* GenericAPIServer.Handler.GoRestfulContainer 中注册了各个路由到 handler 的映射
+* 注册路由的关键路经：InstallAPIGroup -> installAPIResources -> InstallREST -> Install -> registerResourceHandlers
+* `kubectl proxy --port=8080` 后访问 http://127.0.0.1:8080/apis/apiextensions.k8s.io/v1
+* ResourceVersion（利用 Etcd 中的 modifiedIndex 来实现） 有两个已知用处：1.客户端并发操作时实现乐观锁；2.ListWatch 时实现类似断点续传，防止数据丢失

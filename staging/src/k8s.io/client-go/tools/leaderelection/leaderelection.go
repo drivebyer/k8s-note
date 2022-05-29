@@ -203,12 +203,24 @@ func (le *LeaderElector) Run(ctx context.Context) {
 		le.config.Callbacks.OnStoppedLeading()
 	}()
 
+	// 按照副本的启动顺序，除了一个副本外的其它副本会阻塞在这里
 	if !le.acquire(ctx) {
 		return // ctx signalled done
 	}
+
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	// 回调函数 OnStartedLeading 上面注册了只能运行在 leader 上的代码逻辑
 	go le.config.Callbacks.OnStartedLeading(ctx)
+
+	// 按照副本的启动顺序，第一个副本会走到这里，
+	// renew 函数只会在两种情况下返回：
+	// 	1. ctx 被取消
+	// 	2. 更新租期失败
+	//
+	// 当 leader 副本从 Run 函数返回后，通常意味着当前副本已经不能提供高可用了。
+	// 这时，剩余的副本会在 acquire 函数中拿到租期，并接管 leader 的角色
 	le.renew(ctx)
 }
 
