@@ -540,6 +540,8 @@ func isPodStatusCacheTerminal(status *kubecontainer.PodStatus) bool {
 // UpdatePod carries a configuration change or termination state to a pod. A pod is either runnable,
 // terminating, or terminated, and will transition to terminating if deleted on the apiserver, it is
 // discovered to have a terminal phase (Succeeded or Failed), or if it is evicted by the kubelet.
+//
+// 核心 callee 是 managePodLoop
 func (p *podWorkers) UpdatePod(options UpdatePodOptions) {
 	// handle when the pod is an orphan (no config) and we only have runtime status by running only
 	// the terminating part of the lifecycle
@@ -696,6 +698,8 @@ func (p *podWorkers) UpdatePod(options UpdatePodOptions) {
 			options.KillPodOptions = nil
 		}
 	}
+
+	//
 
 	// the desired work we want to be performing
 	work := podWork{

@@ -11,6 +11,13 @@
 | [集群 leader 选举机制](./staging/src/k8s.io/client-go/tools/leaderelection/note.md)                        | :heavy_check_mark: |
 | [事件管理机制]()                                                                                           | todo               |
 
+## kubelet
+
+关键组件：
+* type PodLifecycleEventGenerator interface
+* type PodWorkers interface
+* 
+
 ## Controller Manager
 
 | 笔记                                                           | 状态   |
@@ -63,4 +70,12 @@
 * GenericAPIServer.Handler.GoRestfulContainer 中注册了各个路由到 handler 的映射
 * 注册路由的关键路经：InstallAPIGroup -> installAPIResources -> InstallREST -> Install -> registerResourceHandlers
 * `kubectl proxy --port=8080` 后访问 http://127.0.0.1:8080/apis/apiextensions.k8s.io/v1
-* ResourceVersion（利用 Etcd 中的 modifiedIndex 来实现） 有两个已知用处：1.客户端并发操作时实现乐观锁；2.ListWatch 时实现类似断点续传，防止数据丢失
+* ResourceVersion（利用 Etcd 中的 modifiedIndex 来实现） 有两个已知用处：
+  1. 客户端并发操作时实现乐观锁；
+  2. ListWatch 时实现类似断点续传，防止数据丢失
+* StatefulSet 中的关键：
+  1. 为 Pod 生成一个 DNS 记录：${pod_name}.${statefulset_name}.${namespace}.svc.cluster.local
+  2. 为 Pod 的 PVC 生成名字：${pvc_name}-${statefulset_name}-${编号}
+  3. StatefulSet 中的 Pod 被删除后，对应的 PVC 不会删除。等待 Controller 执行控制循环后，新生成的 Pod 将重新挂载原来的 PVC
+  4. 为 StatefulSet 指定一个 Headless Service 后，StatefulSet 的 Controller 会为 StatefulSet 中的每一个 Pod 生成固定的 DNS 记录
+  

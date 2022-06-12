@@ -330,6 +330,10 @@ func (s *Server) getMetricMethodBucket(method string) string {
 // patterns with the restful Container.
 func (s *Server) InstallDefaultHandlers() {
 	s.addMetricsBucketMatcher("healthz")
+	// 这里注册了 3 个路由，分别是:
+	// 1. /healthz/ping
+	// 2. /healthz/log
+	// 3. /healthz/syncloop
 	healthz.InstallHandler(s.restfulCont,
 		healthz.PingHealthz,
 		healthz.LogHealthz,
@@ -593,6 +597,8 @@ func (s *Server) InstallProfilingHandler(enableProfilingLogHandler bool, enableC
 }
 
 // Checks if kubelet's sync loop  that updates containers is working.
+//
+// 检查 kubelet 的主循环是否执行时间过长
 func (s *Server) syncLoopHealthCheck(req *http.Request) error {
 	duration := s.host.ResyncInterval() * 2
 	minDuration := time.Minute * 5

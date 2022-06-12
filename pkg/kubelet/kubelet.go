@@ -1475,20 +1475,20 @@ func (kl *Kubelet) Run(updates <-chan kubetypes.PodUpdate) {
 //   this loop of syncPod
 //
 // The workflow is:
-// * If the pod is being created, record pod worker start latency
-// * Call generateAPIPodStatus to prepare an v1.PodStatus for the pod
+// * If the pod is being created, record pod worker start latency         ->
+// * Call generateAPIPodStatus to prepare an v1.PodStatus for the pod     -> kl.generateAPIPodStatus
 // * If the pod is being seen as running for the first time, record pod
 //   start latency
 // * Update the status of the pod in the status manager
 // * Stop the pod's containers if it should not be running due to soft
 //   admission
-// * Ensure any background tracking for a runnable pod is started
+// * Ensure any background tracking for a runnable pod is started          ->
 // * Create a mirror pod if the pod is a static pod, and does not
-//   already have a mirror pod
-// * Create the data directories for the pod if they do not exist
-// * Wait for volumes to attach/mount
-// * Fetch the pull secrets for the pod
-// * Call the container runtime's SyncPod callback
+//   already have a mirror pod                                             -> kl.podManager.CreateMirrorPod
+// * Create the data directories for the pod if they do not exist          -> kl.makePodDataDirs
+// * Wait for volumes to attach/mount                                      -> kl.volumeManager.WaitForAttachAndMount
+// * Fetch the pull secrets for the pod                                    -> kl.getPullSecretsForPod
+// * Call the container runtime's SyncPod callback                         -> kl.containerRuntime.SyncPod
 // * Update the traffic shaping for the pod's ingress and egress limits
 //
 // If any step of this workflow errors, the error is returned, and is repeated
@@ -2044,6 +2044,8 @@ func (kl *Kubelet) syncLoop(updates <-chan kubetypes.PodUpdate, handler SyncHand
 // * housekeepingCh: trigger cleanup of pods
 // * health manager: sync pods that have failed or in which one or more
 //                     containers have failed health checks
+//
+// 核心 callee 是 HandlePodUpdates
 func (kl *Kubelet) syncLoopIteration(configCh <-chan kubetypes.PodUpdate, handler SyncHandler,
 	syncCh <-chan time.Time, housekeepingCh <-chan time.Time, plegCh <-chan *pleg.PodLifecycleEvent) bool {
 	select {
@@ -2356,6 +2358,7 @@ func (kl *Kubelet) updateRuntimeUp() {
 		return
 	}
 	kl.runtimeState.setRuntimeState(nil)
+	// 当 container runtime 与 container network 准备好后执行 initializeRuntimeDependentModules
 	kl.oneTimeInitializer.Do(kl.initializeRuntimeDependentModules)
 	kl.runtimeState.setRuntimeSync(kl.clock.Now())
 }
